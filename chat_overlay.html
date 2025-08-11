@@ -12,7 +12,7 @@
         color: white;
         overflow: hidden;
     }
-    
+
     #chat {
         padding: 10px;
         height: 400px; /* Fixed height - adjust as needed */
@@ -21,7 +21,7 @@
         justify-content: flex-end;
         overflow: hidden;
     }
-    
+
     .message {
         margin-bottom: 8px;
         padding: 6px 10px;
@@ -32,52 +32,51 @@
         animation: fadeIn 0.5s ease-in;
         transition: opacity 0.5s ease-out;
     }
-    
+
     .username {
         font-weight: bold;
         margin-right: 10px;
     }
-    
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    
+
     .status {
         position: fixed;
         top: 10px;
         right: 10px;
         padding: 5px 10px;
-        background: #e74c3c;
+        background: 
+#e74c3c;
         border-radius: 15px;
         font-size: 12px;
     }
-    
-    .status.connected { background: #27ae60; }
+
+    .status.connected { background: 
+#27ae60; }
 </style>
 </head>
 <body>
     <div class="status" id="status">Connecting...</div>
     <div id="chat"></div>
-
     <script>
         const CHANNEL = 'yukibloo'; // CHANGE THIS TO YOUR CHANNEL NAME
-        
+
         const chat = document.getElementById('chat');
         const status = document.getElementById('status');
         let ws;
-
         function connect() {
             ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            
+
             ws.onopen = () => {
                 ws.send('PASS SCHMOOPIIE');
                 ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
-                ws.send(`JOIN #${CHANNEL}`);
+                ws.send(JOIN #${CHANNEL});
                 status.textContent = 'Connected';
                 status.className = 'status connected';
             };
-
             ws.onmessage = (e) => {
                 e.data.split('\r\n').forEach(line => {
                     if (line.startsWith('PING')) {
@@ -88,24 +87,30 @@
                     }
                 });
             };
-
             ws.onclose = () => {
                 status.textContent = 'Disconnected';
                 status.className = 'status';
                 setTimeout(connect, 3000);
             };
         }
-
         function addMessage(username, text) {
             const msg = document.createElement('div');
             msg.className = 'message';
-            
-            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'];
+
+            const colors = ['
+#FF6B6B', '
+#4ECDC4', '
+#45B7D1', '
+#96CEB4', '
+#FECA57', '
+#FF9FF3', '
+#54A0FF', '
+#5F27CD'];
             const color = colors[username.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % colors.length];
-            
-            msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
+
+            msg.innerHTML = <span class="username" style="color: ${color}">${username}:</span>${text};
             chat.appendChild(msg);
-            
+
             // Remove messages that exceed the height
             while (chat.scrollHeight > chat.clientHeight && chat.children.length > 1) {
                 const firstMsg = chat.children[0];
@@ -116,10 +121,9 @@
                     }
                 }, 500);
             }
-            
+
             msg.scrollIntoView({ behavior: 'smooth' });
         }
-
         connect();
     </script>
 </body>
