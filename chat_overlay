@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Twitch Chat Overlay</title>
+<style>
+    body {
+        margin: 0;
+        background: transparent; /* So it blends with your stream */
+        overflow: hidden;
+    }
+    iframe {
+        border: none;
+        width: 100%;
+        height: "100%;
+    }
+</style>
+</head>
+<body>
+    <iframe
+        src="https://www.twitch.tv/embed/yukibloo/chat?parent=localhost&darkpopout"
+        scrolling="no"
+        allowfullscreen>
+    </iframe>
+</body>
+</html>
