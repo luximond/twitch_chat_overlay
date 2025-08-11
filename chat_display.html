@@ -2,184 +2,125 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Custom Twitch Chat Overlay</title>
+<title>OBS Twitch Chat</title>
 <style>
     body {
         margin: 0;
-        padding: 10px;
+        padding: 0;
         background: transparent;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: Arial, sans-serif;
         color: white;
         overflow: hidden;
     }
     
-    #chat-container {
-        width: 350px;
-        height: 800px;
+    #chat {
+        padding: 10px;
+        height: 400px; /* Fixed height - adjust as needed */
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
+        overflow: hidden;
     }
     
     .message {
-        margin-bottom: 5px;
-        padding: 5px 8px;
-        background: rgba(0, 0, 0, 0.7);
-        border-radius: 4px;
-        font-size: 14px;
-        line-height: 1.4;
-        animation: slideIn 0.3s ease-out;
+        margin-bottom: 8px;
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.4); /* More translucent */
+        border-radius: 5px;
+        font-size: 16px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        animation: fadeIn 0.5s ease-in;
+        transition: opacity 0.5s ease-out;
     }
     
     .username {
         font-weight: bold;
-        margin-right: 8px;
+        margin-right: 10px;
     }
     
-    .message-text {
-        word-wrap: break-word;
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
-    #connection-status {
-        position: absolute;
+    .status {
+        position: fixed;
         top: 10px;
         right: 10px;
         padding: 5px 10px;
-        background: rgba(255, 0, 0, 0.8);
+        background: #e74c3c;
         border-radius: 15px;
         font-size: 12px;
     }
     
-    #connection-status.connected {
-        background: rgba(0, 255, 0, 0.8);
-    }
+    .status.connected { background: #27ae60; }
 </style>
 </head>
 <body>
-    <div id="connection-status">Connecting...</div>
-    <div id="chat-container"></div>
+    <div class="status" id="status">Connecting...</div>
+    <div id="chat"></div>
 
     <script>
-        class TwitchChat {
-            constructor(channel) {
-                this.channel = channel;
-                this.socket = null;
-                this.chatContainer = document.getElementById('chat-container');
-                this.statusEl = document.getElementById('connection-status');
-                this.maxMessages = 50; // Keep only last 50 messages
-                this.connect();
-            }
+        const CHANNEL = 'yukibloo'; // CHANGE THIS TO YOUR CHANNEL NAME
+        
+        const chat = document.getElementById('chat');
+        const status = document.getElementById('status');
+        let ws;
 
-            connect() {
-                this.socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-                
-                this.socket.onopen = () => {
-                    console.log('Connected to Twitch IRC');
-                    // Authenticate as anonymous user
-                    this.socket.send('PASS SCHMOOPIIE');
-                    this.socket.send('NICK justinfan12345');
-                    this.socket.send(`JOIN #${this.channel}`);
-                    this.updateStatus('Connected', true);
-                };
+        function connect() {
+            ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+            
+            ws.onopen = () => {
+                ws.send('PASS SCHMOOPIIE');
+                ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
+                ws.send(`JOIN #${CHANNEL}`);
+                status.textContent = 'Connected';
+                status.className = 'status connected';
+            };
 
-                this.socket.onmessage = (event) => {
-                    this.handleMessage(event.data);
-                };
-
-                this.socket.onclose = () => {
-                    console.log('Disconnected from Twitch IRC');
-                    this.updateStatus('Disconnected', false);
-                    // Reconnect after 5 seconds
-                    setTimeout(() => this.connect(), 5000);
-                };
-
-                this.socket.onerror = (error) => {
-                    console.error('WebSocket error:', error);
-                    this.updateStatus('Error', false);
-                };
-            }
-
-            handleMessage(data) {
-                const lines = data.split('\r\n');
-                
-                for (const line of lines) {
+            ws.onmessage = (e) => {
+                e.data.split('\r\n').forEach(line => {
                     if (line.startsWith('PING')) {
-                        this.socket.send('PONG :tmi.twitch.tv');
+                        ws.send('PONG :tmi.twitch.tv');
                     } else if (line.includes('PRIVMSG')) {
-                        this.parsePrivMsg(line);
+                        const match = line.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)/);
+                        if (match) addMessage(match[1], match[2]);
                     }
-                }
-            }
+                });
+            };
 
-            parsePrivMsg(line) {
-                const match = line.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)/);
-                if (match) {
-                    const [, username, message] = match;
-                    this.addMessage(username, message);
-                }
-            }
-
-            addMessage(username, message) {
-                const messageEl = document.createElement('div');
-                messageEl.className = 'message';
-                
-                const usernameEl = document.createElement('span');
-                usernameEl.className = 'username';
-                usernameEl.textContent = username;
-                usernameEl.style.color = this.getUserColor(username);
-                
-                const messageTextEl = document.createElement('span');
-                messageTextEl.className = 'message-text';
-                messageTextEl.textContent = message;
-                
-                messageEl.appendChild(usernameEl);
-                messageEl.appendChild(messageTextEl);
-                
-                this.chatContainer.appendChild(messageEl);
-                
-                // Remove old messages
-                while (this.chatContainer.children.length > this.maxMessages) {
-                    this.chatContainer.removeChild(this.chatContainer.firstChild);
-                }
-                
-                // Auto-scroll
-                messageEl.scrollIntoView({ behavior: 'smooth' });
-            }
-
-            getUserColor(username) {
-                const colors = [
-                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
-                    '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD',
-                    '#00D2D3', '#FF9F43', '#54A0FF', '#2ED573'
-                ];
-                
-                let hash = 0;
-                for (let i = 0; i < username.length; i++) {
-                    hash = username.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                
-                return colors[Math.abs(hash) % colors.length];
-            }
-
-            updateStatus(text, connected) {
-                this.statusEl.textContent = text;
-                this.statusEl.className = connected ? 'connected' : '';
-            }
+            ws.onclose = () => {
+                status.textContent = 'Disconnected';
+                status.className = 'status';
+                setTimeout(connect, 3000);
+            };
         }
 
-        // Initialize chat - replace 'yukibloo' with your actual channel name
-        const chat = new TwitchChat('yukibloo');
+        function addMessage(username, text) {
+            const msg = document.createElement('div');
+            msg.className = 'message';
+            
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'];
+            const color = colors[username.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % colors.length];
+            
+            msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
+            chat.appendChild(msg);
+            
+            // Remove messages that exceed the height
+            while (chat.scrollHeight > chat.clientHeight && chat.children.length > 1) {
+                const firstMsg = chat.children[0];
+                firstMsg.style.opacity = '0';
+                setTimeout(() => {
+                    if (firstMsg.parentNode) {
+                        chat.removeChild(firstMsg);
+                    }
+                }, 500);
+            }
+            
+            msg.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        connect();
     </script>
 </body>
 </html>
