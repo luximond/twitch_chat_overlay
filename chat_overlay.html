@@ -2,28 +2,125 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Twitch Chat Overlay</title>
+<title>OBS Twitch Chat</title>
 <style>
     body {
         margin: 0;
-        background: transparent; /* So it blends with your stream */
+        padding: 0;
+        background: transparent;
+        font-family: Arial, sans-serif;
+        color: white;
         overflow: hidden;
     }
-    iframe {
-        border: none;
-        width: 100%;
-        height: 300%;
+    
+    #chat {
+        padding: 10px;
+        height: 400px; /* Fixed height - adjust as needed */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        overflow: hidden;
     }
+    
+    .message {
+        margin-bottom: 8px;
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.4); /* More translucent */
+        border-radius: 5px;
+        font-size: 16px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        animation: fadeIn 0.5s ease-in;
+        transition: opacity 0.5s ease-out;
+    }
+    
+    .username {
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .status {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        background: #e74c3c;
+        border-radius: 15px;
+        font-size: 12px;
+    }
+    
+    .status.connected { background: #27ae60; }
 </style>
 </head>
 <body>
-    <iframe
-  src="https://www.twitch.tv/embed/yukibloo/chat?parent=luximond.github.io&darkpopout"
-  width="350"
-  height="800"
-  frameborder="0"
-  scrolling="no"
-  allowfullscreen>
-</iframe>
+    <div class="status" id="status">Connecting...</div>
+    <div id="chat"></div>
+
+    <script>
+        const CHANNEL = 'yukibloo'; // CHANGE THIS TO YOUR CHANNEL NAME
+        
+        const chat = document.getElementById('chat');
+        const status = document.getElementById('status');
+        let ws;
+
+        function connect() {
+            ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+            
+            ws.onopen = () => {
+                ws.send('PASS SCHMOOPIIE');
+                ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
+                ws.send(`JOIN #${CHANNEL}`);
+                status.textContent = 'Connected';
+                status.className = 'status connected';
+            };
+
+            ws.onmessage = (e) => {
+                e.data.split('\r\n').forEach(line => {
+                    if (line.startsWith('PING')) {
+                        ws.send('PONG :tmi.twitch.tv');
+                    } else if (line.includes('PRIVMSG')) {
+                        const match = line.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)/);
+                        if (match) addMessage(match[1], match[2]);
+                    }
+                });
+            };
+
+            ws.onclose = () => {
+                status.textContent = 'Disconnected';
+                status.className = 'status';
+                setTimeout(connect, 3000);
+            };
+        }
+
+        function addMessage(username, text) {
+            const msg = document.createElement('div');
+            msg.className = 'message';
+            
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'];
+            const color = colors[username.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % colors.length];
+            
+            msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
+            chat.appendChild(msg);
+            
+            // Remove messages that exceed the height
+            while (chat.scrollHeight > chat.clientHeight && chat.children.length > 1) {
+                const firstMsg = chat.children[0];
+                firstMsg.style.opacity = '0';
+                setTimeout(() => {
+                    if (firstMsg.parentNode) {
+                        chat.removeChild(firstMsg);
+                    }
+                }, 500);
+            }
+            
+            msg.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        connect();
+    </script>
 </body>
 </html>
