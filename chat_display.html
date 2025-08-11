@@ -15,20 +15,22 @@
     
     #chat {
         padding: 10px;
-        height: 100vh;
+        height: 400px; /* Fixed height - adjust as needed */
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
+        overflow: hidden;
     }
     
     .message {
         margin-bottom: 8px;
         padding: 6px 10px;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.4); /* More translucent */
         border-radius: 5px;
         font-size: 16px;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         animation: fadeIn 0.5s ease-in;
+        transition: opacity 0.5s ease-out;
     }
     
     .username {
@@ -104,8 +106,16 @@
             msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
             chat.appendChild(msg);
             
-            // Keep only last 20 messages
-            while (chat.children.length > 21) chat.removeChild(chat.children[0]);
+            // Remove messages that exceed the height
+            while (chat.scrollHeight > chat.clientHeight && chat.children.length > 1) {
+                const firstMsg = chat.children[0];
+                firstMsg.style.opacity = '0';
+                setTimeout(() => {
+                    if (firstMsg.parentNode) {
+                        chat.removeChild(firstMsg);
+                    }
+                }, 500);
+            }
             
             msg.scrollIntoView({ behavior: 'smooth' });
         }
