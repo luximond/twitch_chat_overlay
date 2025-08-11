@@ -105,7 +105,7 @@
             chat.appendChild(msg);
             
             // Remove old messages with fade effect
-            while (chat.children.length > 15) {
+            while (chat.children.length > 6) {
                 const firstMsg = chat.children[0];
                 firstMsg.style.opacity = '0';
                 firstMsg.style.transform = 'translateY(-20px)';
