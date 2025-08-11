@@ -104,16 +104,10 @@
             
             chat.appendChild(msg);
             
-            // Remove old messages with fade effect
-            while (chat.children.length > 6) {
+            // Remove old messages immediately if we exceed 6
+            if (chat.children.length > 6) {
                 const firstMsg = chat.children[0];
-                firstMsg.style.opacity = '0';
-                firstMsg.style.transform = 'translateY(-20px)';
-                setTimeout(() => {
-                    if (firstMsg.parentNode === chat) {
-                        chat.removeChild(firstMsg);
-                    }
-                }, 300);
+                chat.removeChild(firstMsg);
             }
             
             // Auto-scroll to show new messages
