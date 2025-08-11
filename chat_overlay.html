@@ -19,7 +19,8 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     
     .message {
@@ -98,21 +99,29 @@
             const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'];
             const color = colors[username.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % colors.length];
             
-            msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
+            // Create username span
+            const usernameSpan = document.createElement('span');
+            usernameSpan.className = 'username';
+            usernameSpan.style.color = color;
+            usernameSpan.textContent = username + ':';
+            
+            // Add username and text content
+            msg.appendChild(usernameSpan);
+            msg.appendChild(document.createTextNode(' ' + text));
+            
             chat.appendChild(msg);
             
-            // Remove messages that exceed the height
-            while (chat.scrollHeight > chat.clientHeight && chat.children.length > 1) {
+            // Keep only the most recent messages that fit
+            const maxMessages = 20; // Limit number of messages
+            while (chat.children.length > maxMessages) {
                 const firstMsg = chat.children[0];
-                firstMsg.style.opacity = '0';
-                setTimeout(() => {
-                    if (firstMsg.parentNode) {
-                        chat.removeChild(firstMsg);
-                    }
-                }, 500);
+                chat.removeChild(firstMsg);
             }
             
-            msg.scrollIntoView({ behavior: 'smooth' });
+            // Smooth scroll to bottom
+            setTimeout(() => {
+                chat.scrollTop = chat.scrollHeight;
+            }, 10);
         }
         connect();
     </script>
