@@ -23,19 +23,20 @@
     }
     
     .message {
-        margin-bottom: 8px;
-        padding: 6px 10px;
-        background: rgba(0, 0, 0, 0.4); /* More translucent */
-        border-radius: 5px;
-        font-size: 16px;
+        margin-bottom: 4px;
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.2); /* Much more translucent */
+        border-radius: 3px;
+        font-size: 12px; /* Smaller text */
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-        animation: fadeIn 0.5s ease-in;
-        transition: opacity 0.5s ease-out;
+        animation: fadeIn 0.3s ease-in;
+        transition: opacity 0.3s ease-out;
+        line-height: 1.2;
     }
     
     .username {
         font-weight: bold;
-        margin-right: 10px;
+        margin-right: 6px;
     }
     
     @keyframes fadeIn {
@@ -96,7 +97,25 @@
             };
         }
 
+        let messageQueue = [];
+        let isProcessing = false;
+
         function addMessage(username, text) {
+            messageQueue.push({ username, text });
+            if (!isProcessing) {
+                processMessageQueue();
+            }
+        }
+
+        function processMessageQueue() {
+            if (messageQueue.length === 0) {
+                isProcessing = false;
+                return;
+            }
+
+            isProcessing = true;
+            const { username, text } = messageQueue.shift();
+
             const msg = document.createElement('div');
             msg.className = 'message';
             
@@ -106,18 +125,17 @@
             msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
             chat.appendChild(msg);
             
-            // Remove messages that exceed the height
-            while (chat.scrollHeight > chat.clientHeight && chat.children.length > 1) {
-                const firstMsg = chat.children[0];
-                firstMsg.style.opacity = '0';
-                setTimeout(() => {
-                    if (firstMsg.parentNode) {
-                        chat.removeChild(firstMsg);
-                    }
-                }, 500);
+            // Keep exactly 6 messages
+            if (chat.children.length > 6) {
+                chat.removeChild(chat.children[0]);
             }
             
             msg.scrollIntoView({ behavior: 'smooth' });
+
+            // Process next message after a small delay
+            setTimeout(() => {
+                processMessageQueue();
+            }, 50);
         }
 
         connect();
