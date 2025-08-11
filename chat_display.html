@@ -15,7 +15,7 @@
     
     #chat {
         padding: 10px;
-        height: 200px; /* Fixed height - adjust as needed */
+        height: 400px; /* Fixed height - adjust as needed */
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -106,15 +106,16 @@
             msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
             chat.appendChild(msg);
             
-            // Remove messages that exceed the height
-            while (chat.scrollHeight > chat.clientHeight && chat.children.length > 1) {
+            // Simple approach: keep only a max number of messages
+            const maxMessages = Math.floor(200 / 40); // Roughly height/message height = ~5 messages
+            while (chat.children.length > maxMessages) {
                 const firstMsg = chat.children[0];
                 firstMsg.style.opacity = '0';
                 setTimeout(() => {
-                    if (firstMsg.parentNode) {
-                        chat.removeChild(firstMsg);
+                    if (firstMsg && firstMsg.parentNode) {
+                        firstMsg.remove();
                     }
-                }, 500);
+                }, 300);
             }
             
             msg.scrollIntoView({ behavior: 'smooth' });
