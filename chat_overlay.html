@@ -31,7 +31,7 @@
         font-size: 16px;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         animation: fadeIn 0.5s ease-in;
-        transition: opacity 0.5s ease-out;
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
     }
     
     .username {
@@ -99,29 +99,25 @@
             const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'];
             const color = colors[username.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % colors.length];
             
-            // Create username span
-            const usernameSpan = document.createElement('span');
-            usernameSpan.className = 'username';
-            usernameSpan.style.color = color;
-            usernameSpan.textContent = username + ':';
-            
-            // Add username and text content
-            msg.appendChild(usernameSpan);
-            msg.appendChild(document.createTextNode(' ' + text));
+            // Use innerHTML to properly render emojis and unicode
+            msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span> ${text}`;
             
             chat.appendChild(msg);
             
-            // Keep only the most recent messages that fit
-            const maxMessages = 20; // Limit number of messages
-            while (chat.children.length > maxMessages) {
+            // Remove old messages with fade effect
+            while (chat.children.length > 15) {
                 const firstMsg = chat.children[0];
-                chat.removeChild(firstMsg);
+                firstMsg.style.opacity = '0';
+                firstMsg.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (firstMsg.parentNode === chat) {
+                        chat.removeChild(firstMsg);
+                    }
+                }, 300);
             }
             
-            // Smooth scroll to bottom
-            setTimeout(() => {
-                chat.scrollTop = chat.scrollHeight;
-            }, 10);
+            // Auto-scroll to show new messages
+            msg.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
         connect();
     </script>
