@@ -23,19 +23,20 @@
     }
     
     .message {
-        margin-bottom: 8px;
-        padding: 6px 10px;
-        background: rgba(0, 0, 0, 0.4); /* More translucent */
-        border-radius: 5px;
-        font-size: 16px;
+        margin-bottom: 4px;
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.2); /* Much more translucent */
+        border-radius: 3px;
+        font-size: 12px; /* Smaller text */
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-        animation: fadeIn 0.5s ease-in;
-        transition: opacity 0.5s ease-out;
+        animation: fadeIn 0.3s ease-in;
+        transition: opacity 0.3s ease-out;
+        line-height: 1.2;
     }
     
     .username {
         font-weight: bold;
-        margin-right: 10px;
+        margin-right: 6px;
     }
     
     @keyframes fadeIn {
@@ -106,16 +107,9 @@
             msg.innerHTML = `<span class="username" style="color: ${color}">${username}:</span>${text}`;
             chat.appendChild(msg);
             
-            // Simple approach: keep only a max number of messages
-            const maxMessages = Math.floor(200 / 40); // Roughly height/message height = ~5 messages
-            while (chat.children.length > maxMessages) {
-                const firstMsg = chat.children[0];
-                firstMsg.style.opacity = '0';
-                setTimeout(() => {
-                    if (firstMsg && firstMsg.parentNode) {
-                        firstMsg.remove();
-                    }
-                }, 300);
+            // Keep exactly 6 messages and remove immediately without fade
+            while (chat.children.length > 6) {
+                chat.removeChild(chat.children[0]);
             }
             
             msg.scrollIntoView({ behavior: 'smooth' });
